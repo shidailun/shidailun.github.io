@@ -1,29 +1,24 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <script>
-        fetch('/data/words.json')
-            .then(response => response.json())
-            .then(wordToId => {
-                // Extract word from URL (e.g., /word/abura)
-                const word = window.location.pathname
-                    .split('/word/')[1]
-                    ?.replace(/\//g, ''); // Remove slashes
+fetch('/data/words.json')
+  .then(response => response.json())
+  .then(wordToId => {
+    // Extract word from URL (e.g., /word/Abura)
+    const wordFromURL = window.location.pathname
+      .split('/word/')[1]
+      ?.replace(/\//g, '')
+      .toLowerCase(); // Convert to lowercase
 
-                if (word && wordToId[word]) {
-                    // Redirect to dictionary
-                    window.location.replace(`https://e-dictionary.ilrdf.org.tw/sdq/terms/${wordToId[word]}.htm`);
-                } else {
-                    document.body.innerHTML = `<h1>Word "${word}" not found.</h1>`;
-                }
-            })
-            .catch(error => {
-                document.body.innerHTML = `<h1>Error loading word list. Check console.</h1>`;
-                console.error(error);
-            });
-    </script>
-</head>
-<body>
-    <p>Redirecting...</p>
-</body>
-</html>
+    // Case-insensitive match: find the key in wordToId that matches (lowercase)
+    const matchedWord = Object.keys(wordToId).find(
+      key => key.toLowerCase() === wordFromURL
+    );
+
+    if (matchedWord) {
+      window.location.replace(`https://e-dictionary.ilrdf.org.tw/sdq/terms/${wordToId[matchedWord]}.htm`);
+    } else {
+      document.body.innerHTML = `<h1>Word "${wordFromURL}" not found.</h1>`;
+    }
+  })
+  .catch(error => {
+    document.body.innerHTML = `<h1>Error loading word list.</h1>`;
+    console.error(error);
+  });
