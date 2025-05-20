@@ -1,24 +1,53 @@
-fetch('/data/words.json')
-  .then(response => response.json())
-  .then(wordToId => {
-    // Extract word from URL (e.g., /word/Abura)
-    const wordFromURL = window.location.pathname
-      .split('/word/')[1]
-      ?.replace(/\//g, ''); // Remove slashes
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dictionary Redirect</title>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/data/words.json')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(wordToId => {
+                    // Extract word from URL (e.g., /word/Abura)
+                    const pathParts = window.location.pathname.split('/word/');
+                    const wordFromURL = pathParts[1]?.replace(/\//g, '').trim();
+                    
+                    if (!wordFromURL) {
+                        throw new Error('No word in URL');
+                    }
 
-    // Case-insensitive match: compare lowercase versions
-    const matchedEntry = Object.entries(wordToId).find(
-      ([key]) => key.toLowerCase() === wordFromURL.toLowerCase()
-    );
+                    // Case-insensitive match
+                    const matchedEntry = Object.entries(wordToId).find(
+                        ([key]) => key.toLowerCase() === wordFromURL.toLowerCase()
+                    );
 
-    if (matchedEntry) {
-      const [matchedWord, id] = matchedEntry;
-      window.location.replace(`https://e-dictionary.ilrdf.org.tw/sdq/terms/${id}.htm`);
-    } else {
-      document.body.innerHTML = `<h1>Word "${wordFromURL}" not found.</h1>`;
-    }
-  })
-  .catch(error => {
-    document.body.innerHTML = `<h1>Error loading word list.</h1>`;
-    console.error(error);
-  });
+                    if (matchedEntry) {
+                        const [matchedWord, id] = matchedEntry;
+                        window.location.replace(`https://e-dictionary.ilrdf.org.tw/sdq/terms/${id}.htm`);
+                    } else {
+                        document.body.innerHTML = `<h1>Word "${wordFromURL}" not found in dictionary.</h1>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.body.innerHTML = `
+                        <h1>Error loading dictionary</h1>
+                        <p>${error.message}</p>
+                        <p>Please check:</p>
+                        <ul>
+                            <li>Is words.json at <a href="/data/words.json">/data/words.json</a>?</li>
+                            <li>Does the JSON file contain valid data?</li>
+                        </ul>
+                    `;
+                });
+        });
+    </script>
+</head>
+<body>
+    <p>Redirecting to dictionary...</p>
+</body>
+</html>
