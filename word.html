@@ -1,24 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Dictionary Redirect</title>
+    <title>Redirecting...</title>
     <script>
-        fetch('/data/words.json')  // Path to your JSON file
+        // Step 1: Fetch the JSON
+        fetch('/data/words.json')
             .then(response => response.json())
             .then(wordToId => {
-                // Extract word from URL (e.g., /word/abura)
+                // Step 2: Extract the word from the URL (e.g., /word/abura)
                 const word = window.location.pathname
                     .split('/word/')[1]
-                    ?.replace(/\..*/, '');  // Removes .htm or .html if present
+                    ?.replace(/\//g, ''); // Remove trailing slashes
 
+                // Step 3: Redirect if the word exists
                 if (word && wordToId[word]) {
                     window.location.replace(`https://e-dictionary.ilrdf.org.tw/sdq/terms/${wordToId[word]}.htm`);
                 } else {
-                    document.body.innerHTML = `<h1>Error: Word "${word}" not found!</h1>`;
+                    document.body.innerHTML = `<h1>Error: Word "${word}" not found.</h1>`;
                 }
             })
             .catch(error => {
-                document.body.innerHTML = `<h1>Error loading word list.</h1>`;
+                document.body.innerHTML = `<h1>Error loading the word list. Check the console.</h1>`;
+                console.error("Failed to load words.json:", error);
             });
     </script>
 </head>
