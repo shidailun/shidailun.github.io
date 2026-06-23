@@ -43,27 +43,56 @@
     <button id="retry" class="hidden" onclick="go()">重新嘗試</button>
   </div>
 <script>
-  // Reads the current Cloudflare tunnel URL that the PC publishes (same source the
-  // phone app uses), then forwards there. This page's address never changes;
-  // the server URL behind it can change freely on every restart.
-  var GIST = 'https://gist.githubusercontent.com/shidailun/245a976530b60245227620d916650c1e/raw/gluban_server.txt';
+  // Launcher: prefer the PC (fast, GPU) via its current tunnel, published to the
+  // gist that the phone app also reads. If the PC is unreachable (asleep/offline),
+  // fall back to the always-on public Hugging Face Space. This page's address
+  // never changes; the targets behind it can come and go.
+  var GIST  = 'https://gist.githubusercontent.com/shidailun/245a976530b60245227620d916650c1e/raw/gluban_server.txt';
+  var SPACE = 'https://shidailun-gluban-translate.hf.space';
+
   function show(stopped, text){
     document.getElementById('spinner').classList.toggle('hidden', stopped);
     document.getElementById('retry').classList.toggle('hidden', !stopped);
     document.getElementById('msg').textContent = text;
   }
+
+  // Resolves true only if the host actually answers within `ms`. Uses no-cors so
+  // we don't need CORS headers on the server; a torn-down tunnel rejects/aborts.
+  function reachable(url, ms){
+    return new Promise(function(resolve){
+      var ctrl = new AbortController();
+      var t = setTimeout(function(){ ctrl.abort(); }, ms);
+      fetch(url.replace(/\/+$/,'') + '/status', { mode:'no-cors', cache:'no-store', signal: ctrl.signal })
+        .then(function(){ clearTimeout(t); resolve(true); })
+        .catch(function(){ clearTimeout(t); resolve(false); });
+    });
+  }
+
   async function go(){
     show(false, '正在尋找伺服器…');
+    // 1) try the PC's current address from the gist
+    var pc = null;
     try {
-      var r = await fetch(GIST + '?_=' + Date.now(), { cache: 'no-store' });
-      if (!r.ok) throw new Error('gist ' + r.status);
-      var url = (await r.text()).trim();
-      if (!/^https:\/\/\S+$/.test(url)) throw new Error('bad url');
-      show(false, '已找到伺服器，正在開啟…');
-      location.replace(url);
-    } catch (e) {
-      show(true, '目前無法連接伺服器。電腦端可能尚未開啟，請稍後再試。');
+      var r = await fetch(GIST + '?_=' + Date.now(), { cache:'no-store' });
+      if (r.ok) {
+        var txt = (await r.text()).trim();
+        if (/^https:\/\/\S+$/.test(txt)) pc = txt;
+      }
+    } catch (e) {}
+
+    if (pc && await reachable(pc, 3500)) {
+      show(false, '已連接電腦伺服器，正在開啟…');
+      return location.replace(pc);
     }
+
+    // 2) fall back to the always-on cloud Space (may be waking — give it longer)
+    show(false, '電腦離線，改用雲端伺服器（可能需喚醒，請稍候）…');
+    if (await reachable(SPACE, 12000)) {
+      return location.replace(SPACE);
+    }
+    // 3) Space slow to wake — go anyway; it loads itself once awake
+    show(false, '正在喚醒雲端伺服器…');
+    location.replace(SPACE);
   }
   go();
 </script>
