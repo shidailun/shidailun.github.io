@@ -2,99 +2,301 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Gluban Translate</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Gluban Translate · 賽德克語翻譯</title>
+<link rel="icon" href="https://shidailun-gluban-translate.hf.space/icon-192.png">
 <style>
-  :root { color-scheme: light dark; }
-  html,body { height:100%; margin:0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --bg:#0e2410; --card:rgba(0,0,0,0.28); --line:#2a4a2a; --txt:#f2efe6; --accent:#8fd19e; }
+  html, body { height: 100%; }
   body {
     font-family: -apple-system, "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
-    background: #14361f; color: #f2efe6;
-    display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px;
+    color: var(--txt);
+    background: linear-gradient(160deg, #102a14, #0a1a0c 60%, #08120a);
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+    padding: 18px 14px 40px;
   }
-  .card {
-    max-width: 420px; width:100%; text-align:center;
-    background: rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.12);
-    border-radius:18px; padding:32px 26px; backdrop-filter: blur(4px);
+  header { text-align: center; margin: 6px 0 14px; }
+  h1 { font-size: 1.5rem; letter-spacing: .5px; }
+  .sub { font-size: .8rem; opacity: .6; margin-top: 3px; }
+
+  /* status + speed badge */
+  .statusbar {
+    display: flex; align-items: center; gap: 8px; justify-content: center;
+    margin: 10px 0 16px; min-height: 26px;
   }
-  h1 { margin:0 0 6px; font-size:1.6rem; letter-spacing:.5px; }
-  .sub { margin:0 0 22px; font-size:.85rem; opacity:.6; }
-  .spinner {
-    width:34px; height:34px; margin:6px auto 18px;
-    border:3px solid rgba(255,255,255,.2); border-top-color:#8fd19e;
-    border-radius:50%; animation:spin .9s linear infinite;
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: .78rem; font-weight: 700; padding: 3px 9px; border-radius: 999px;
+    border: 1px solid var(--line); background: #10240f;
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  #msg { font-size:1.02rem; line-height:1.6; margin:0 0 18px; }
-  button {
-    font: inherit; font-size:1rem; color:#14361f; background:#8fd19e;
-    border:0; border-radius:10px; padding:11px 22px; cursor:pointer; font-weight:600;
+  .badge.gpu { color: #aef0ae; border-color: #3ad13a; }
+  .badge.cpu { color: #f0d8a0; border-color: #6a5a2a; }
+  .badge.off { color: #d99; border-color: #6a2a2a; }
+  #status { font-size: .92rem; opacity: .85; }
+
+  .wrap { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 12px; }
+  .panel { background: var(--card); border: 1px solid rgba(255,255,255,.10); border-radius: 16px; padding: 12px; }
+  .row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  select {
+    font: inherit; font-size: .95rem; font-weight: 600; color: var(--txt);
+    background: #10240f; border: 1px solid var(--line); border-radius: 9px; padding: 7px 10px;
   }
-  button:hover { background:#a3dcb0; }
-  .hidden { display:none !important; }
+  textarea {
+    width: 100%; min-height: 84px; resize: vertical; font: inherit; font-size: 1.05rem;
+    color: var(--txt); background: #0a180b; border: 1px solid var(--line);
+    border-radius: 10px; padding: 11px 12px; line-height: 1.45;
+  }
+  textarea::placeholder { color: #6f8f6f; }
+  .foot { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+  .iBtn {
+    font-size: 1.1rem; background: #10240f; border: 1px solid var(--line);
+    border-radius: 9px; padding: 7px 11px; cursor: pointer; color: var(--txt);
+  }
+  .iBtn:hover { background: #163516; }
+  .iBtn.rec { background: #5a1a1a; border-color: #d14a4a; }
+  label.chk { font-size: .82rem; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; opacity: .9; }
+  .swap { align-self: center; }
+  .swapBtn { font-size: 1.2rem; background: none; border: 0; color: var(--accent); cursor: pointer; }
+  .goBtn {
+    font: inherit; font-size: 1.05rem; font-weight: 700; color: #0e2410; background: var(--accent);
+    border: 0; border-radius: 11px; padding: 12px; cursor: pointer; width: 100%;
+  }
+  .goBtn:hover { background: #a3dcb0; }
+  .goBtn:disabled { opacity: .5; cursor: default; }
+
+  /* alternatives */
+  #alts { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .altLbl { font-size: .68rem; color: #9cc89c; font-weight: 700; letter-spacing: .5px; }
+  .altChip {
+    display: block; width: 100%; text-align: left; background: #0e2a0e; border: 1px solid var(--line);
+    color: #cfeccf; border-radius: 8px; padding: 8px 12px; font: inherit; font-size: .95rem; cursor: pointer;
+  }
+  .altChip:hover { background: #1a4a1a; }
+  .ver { position: fixed; right: 10px; bottom: 8px; font-size: .68rem; opacity: .4; }
 </style>
 </head>
 <body>
-  <div class="card">
+  <header>
     <h1>Gluban Translate</h1>
     <p class="sub">賽德克語翻譯 · Seediq ⇄ 中文 / English</p>
-    <div id="spinner" class="spinner"></div>
-    <p id="msg">正在尋找伺服器…</p>
-    <button id="retry" class="hidden" onclick="go()">重新嘗試</button>
-  </div>
-<script>
-  // Launcher: prefer the PC (fast, GPU) via its current tunnel, published to the
-  // gist that the phone app also reads. If the PC is unreachable (asleep/offline),
-  // fall back to the always-on public Hugging Face Space. This page's address
-  // never changes; the targets behind it can come and go.
-  var GIST  = 'https://gist.githubusercontent.com/shidailun/245a976530b60245227620d916650c1e/raw/gluban_server.txt';
-  var SPACE = 'https://shidailun-gluban-translate.hf.space';
+  </header>
 
-  function show(stopped, text){
-    document.getElementById('spinner').classList.toggle('hidden', stopped);
-    document.getElementById('retry').classList.toggle('hidden', !stopped);
-    document.getElementById('msg').textContent = text;
+  <div class="statusbar">
+    <span id="badge" class="badge off">⚪ —</span>
+    <span id="status">尋找伺服器…</span>
+  </div>
+
+  <div class="wrap">
+    <!-- source -->
+    <div class="panel">
+      <div class="row">
+        <select id="srcLang" onchange="onLang('src')"></select>
+      </div>
+      <textarea id="srcTxt" placeholder="輸入文字…"></textarea>
+      <div class="foot">
+        <button class="iBtn" id="micBtn" onclick="toggleMic()" title="錄音辨識">🎤</button>
+        <label class="chk"><input type="checkbox" id="nativeChk"> 我是母語者</label>
+      </div>
+    </div>
+
+    <div class="swap"><button class="swapBtn" onclick="swap()" title="對調">⇅</button></div>
+
+    <!-- target -->
+    <div class="panel">
+      <div class="row">
+        <select id="tgtLang" onchange="onLang('tgt')"></select>
+      </div>
+      <textarea id="tgtTxt" placeholder="翻譯…" readonly></textarea>
+      <div id="alts"></div>
+      <div class="foot">
+        <button class="iBtn" id="spkBtn" onclick="speak(document.getElementById('tgtTxt').value)" title="朗讀">🔊</button>
+        <label class="chk"><input type="checkbox" id="autoChk"> 自動朗讀</label>
+      </div>
+    </div>
+
+    <button class="goBtn" id="goBtn" onclick="translate()">翻譯</button>
+  </div>
+
+  <p class="ver">網頁版 v1.2.0</p>
+
+<script>
+  // ---- backends -------------------------------------------------------------
+  // The app is a static page; it talks to a backend over its public API.
+  // Prefer the laptop (fast, GPU) via its current tunnel, published to a gist;
+  // fall back to the always-on Hugging Face Space (CPU). The page URL never
+  // changes — only the backend behind it does.
+  const SPACE    = "https://shidailun-gluban-translate.hf.space";
+  const GIST_API = "https://api.github.com/gists/245a976530b60245227620d916650c1e";
+  let API = SPACE;            // current backend base URL
+  let busy = false;          // a translate/tts/stt is in flight
+
+  const LANGS = [
+    { code: "sdq_Latn", name: "賽德克語" },
+    { code: "zho_Hans", name: "中文" },
+    { code: "eng_Latn", name: "英文" },
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  function setStatus(s) { $("status").textContent = s; }
+
+  function setBadge(device) {
+    const b = $("badge");
+    if (device === "cuda")      { b.className = "badge gpu"; b.textContent = "🐇 GPU"; }
+    else if (device === "cpu")  { b.className = "badge cpu"; b.textContent = "🐢 CPU"; }
+    else                        { b.className = "badge off"; b.textContent = "⚪ 離線"; }
   }
 
-  // Resolves true only if the host actually answers within `ms`. Uses no-cors so
-  // we don't need CORS headers on the server; a torn-down tunnel rejects/aborts.
-  function reachable(url, ms){
-    return new Promise(function(resolve){
-      var ctrl = new AbortController();
-      var t = setTimeout(function(){ ctrl.abort(); }, ms);
-      fetch(url.replace(/\/+$/,'') + '/status', { mode:'no-cors', cache:'no-store', signal: ctrl.signal })
-        .then(function(){ clearTimeout(t); resolve(true); })
-        .catch(function(){ clearTimeout(t); resolve(false); });
+  async function probe(base, ms) {
+    try {
+      const c = new AbortController();
+      const t = setTimeout(() => c.abort(), ms || 3500);
+      const r = await fetch(base + "/status", { signal: c.signal, cache: "no-store" });
+      clearTimeout(t);
+      return r.ok ? await r.json() : null;
+    } catch (e) { return null; }
+  }
+
+  async function tunnelUrl() {
+    try {
+      const r = await fetch(GIST_API + "?_=" + Date.now(), { cache: "no-store" });
+      if (r.ok) {
+        const j = await r.json();
+        const t = (((j.files || {})["gluban_server.txt"] || {}).content || "").trim();
+        if (/^https?:\/\//.test(t)) return t;
+      }
+    } catch (e) {}
+    return "";
+  }
+
+  // Choose the fastest reachable backend and reflect it in the badge.
+  async function pickBackend() {
+    if (busy) return;                                   // never switch mid-request
+    const tun = await tunnelUrl();
+    if (tun) {
+      const s = await probe(tun);
+      if (s) { API = tun; setBadge(s.device); if ($("status").textContent === "尋找伺服器…") setStatus("就緒"); return; }
+    }
+    const s = await probe(SPACE, 8000);                 // Space may be waking
+    API = SPACE;
+    setBadge(s ? s.device : null);
+    if ($("status").textContent === "尋找伺服器…") setStatus(s ? "就緒" : "雲端喚醒中…");
+  }
+
+  // ---- language UI ----------------------------------------------------------
+  function fillLangs() {
+    for (const sel of [$("srcLang"), $("tgtLang")]) {
+      sel.innerHTML = LANGS.map(l => `<option value="${l.code}">${l.name}</option>`).join("");
+    }
+    $("srcLang").value = "zho_Hans";
+    $("tgtLang").value = "sdq_Latn";
+  }
+  function onLang(changed) {
+    const sl = $("srcLang"), tl = $("tgtLang");
+    if (sl.value === tl.value) {                         // src and tgt can never match
+      const other = LANGS.map(l => l.code).find(c => c !== (changed === "src" ? sl.value : tl.value));
+      if (changed === "src") tl.value = other; else sl.value = other;
+    }
+  }
+  function swap() {
+    const sl = $("srcLang"), tl = $("tgtLang"), st = $("srcTxt"), tt = $("tgtTxt");
+    [sl.value, tl.value] = [tl.value, sl.value];
+    [st.value, tt.value] = [tt.value, st.value];
+    renderAlts([]);
+  }
+
+  // ---- translate ------------------------------------------------------------
+  async function translate() {
+    const text = $("srcTxt").value.trim();
+    const src = $("srcLang").value, tgt = $("tgtLang").value;
+    if (!text || src === tgt) return;
+    busy = true; $("goBtn").disabled = true; setStatus("翻譯中…"); renderAlts([]);
+    try {
+      const fd = new FormData();
+      fd.append("text", text); fd.append("src", src); fd.append("tgt", tgt);
+      const r = await fetch(API + "/translate", { method: "POST", body: fd });
+      if (!r.ok) throw new Error(await r.text());
+      const j = await r.json();
+      $("tgtTxt").value = j.result;
+      renderAlts(j.alternatives);
+      setStatus("就緒");
+      if ($("autoChk").checked && tgt === "sdq_Latn") speak(j.result);
+    } catch (e) {
+      setStatus("翻譯失敗");
+    } finally {
+      busy = false; $("goBtn").disabled = false;
+    }
+  }
+
+  function renderAlts(list) {
+    const box = $("alts");
+    box.innerHTML = "";
+    const alts = Array.isArray(list) ? list.slice(0, 2) : [];
+    if (!alts.length) return;
+    const lbl = document.createElement("div"); lbl.className = "altLbl"; lbl.textContent = "其他翻譯";
+    box.appendChild(lbl);
+    alts.forEach(a => {
+      const b = document.createElement("button");
+      b.className = "altChip"; b.type = "button"; b.textContent = a;
+      b.onclick = () => { const cur = $("tgtTxt").value; $("tgtTxt").value = a; renderAlts([cur, ...alts.filter(x => x !== a)].filter(Boolean)); };
+      box.appendChild(b);
     });
   }
 
-  async function go(){
-    show(false, '正在尋找伺服器…');
-    // 1) try the PC's current address from the gist
-    var pc = null;
+  // ---- text-to-speech -------------------------------------------------------
+  let audio = null;
+  async function speak(text) {
+    text = (text || "").trim();
+    if (!text || $("tgtLang").value !== "sdq_Latn") return;
+    if (busy) return;
+    busy = true; setStatus("合成中…");
     try {
-      var r = await fetch(GIST + '?_=' + Date.now(), { cache:'no-store' });
-      if (r.ok) {
-        var txt = (await r.text()).trim();
-        if (/^https:\/\/\S+$/.test(txt)) pc = txt;
-      }
-    } catch (e) {}
-
-    if (pc && await reachable(pc, 3500)) {
-      show(false, '已連接電腦伺服器，正在開啟…');
-      return location.replace(pc);
-    }
-
-    // 2) fall back to the always-on cloud Space (may be waking — give it longer)
-    show(false, '電腦離線，改用雲端伺服器（可能需喚醒，請稍候）…');
-    if (await reachable(SPACE, 12000)) {
-      return location.replace(SPACE);
-    }
-    // 3) Space slow to wake — go anyway; it loads itself once awake
-    show(false, '正在喚醒雲端伺服器…');
-    location.replace(SPACE);
+      const fd = new FormData();
+      fd.append("text", text); fd.append("voice", "Pawan Nawi");
+      const r = await fetch(API + "/tts", { method: "POST", body: fd });
+      if (!r.ok) throw new Error();
+      const blob = await r.blob();
+      if (audio) { audio.pause(); }
+      audio = new Audio(URL.createObjectURL(blob));
+      audio.play();
+      setStatus("就緒");
+    } catch (e) {
+      setStatus("語音失敗");
+    } finally { busy = false; }
   }
-  go();
+
+  // ---- speech-to-text (mic) -------------------------------------------------
+  let rec = null, chunks = [];
+  async function toggleMic() {
+    if (rec && rec.state === "recording") { rec.stop(); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      rec = new MediaRecorder(stream); chunks = [];
+      rec.ondataavailable = e => chunks.push(e.data);
+      rec.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        $("micBtn").classList.remove("rec");
+        busy = true; setStatus("辨識中…");
+        try {
+          const fd = new FormData();
+          fd.append("audio", new Blob(chunks, { type: "audio/webm" }), "rec.webm");
+          fd.append("src", $("srcLang").value);
+          fd.append("native", $("nativeChk").checked ? "1" : "0");
+          const r = await fetch(API + "/stt", { method: "POST", body: fd });
+          const j = await r.json();
+          $("srcTxt").value = j.text || "";
+          setStatus($("srcTxt").value ? "就緒" : "未辨識到內容");
+        } catch (e) { setStatus("辨識失敗"); }
+        finally { busy = false; }
+      };
+      rec.start(); $("micBtn").classList.add("rec"); setStatus("錄音中…（再按一次停止）");
+    } catch (e) { setStatus("麥克風無法使用"); }
+  }
+
+  // ---- boot -----------------------------------------------------------------
+  fillLangs();
+  pickBackend();
+  setInterval(pickBackend, 20000);   // re-check: jump to GPU the moment the laptop is up
 </script>
 </body>
 </html>
