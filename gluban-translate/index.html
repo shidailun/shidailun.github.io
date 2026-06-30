@@ -375,8 +375,7 @@ textarea::placeholder { color: #6a8a6a; }
       </span>
     </div>
 
-    <div class="setRow"><span>運算</span><span class="sysv" id="sysDevice">…</span></div>
-
+    
     <p class="verTxt">網頁版 · v1.1.7</p>
     <button class="xBtn" onclick="hideSettings()" style="margin-top:14px;">關閉</button>
   </div>
@@ -542,10 +541,10 @@ function showSettings() {
 
 // Show what this page is running on (CPU/GPU), read from /status.
 function populateSystemInfo() {
-  document.getElementById("sysDevice").textContent = "…";
+  (document.getElementById("sysDevice")||{}).textContent = "…";
   fetch(BACKEND + "/status", { cache: "no-store" }).then(r => r.json()).then(j => {
-    document.getElementById("sysDevice").textContent = j.device === "cuda" ? "GPU（CUDA）" : "CPU";
-  }).catch(() => { document.getElementById("sysDevice").textContent = "未知"; });
+    (document.getElementById("sysDevice")||{}).textContent = j.device === "cuda" ? "GPU（CUDA）" : "CPU";
+  }).catch(() => { (document.getElementById("sysDevice")||{}).textContent = "未知"; });
 }
 
 function hideSettings(e) {
