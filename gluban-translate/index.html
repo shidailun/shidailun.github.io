@@ -389,8 +389,8 @@ var BACKEND = "https://shidailun-gluban-translate.hf.space";                 /* 
 var GIST_DISC = "https://api.github.com/gists/245a976530b60245227620d916650c1e";
 function setSpeedBadge(dev) {
   var b = document.getElementById("spdBadge"); if (!b) return;
-  if (dev === "cuda")     { b.className = "spdBadge gpu"; b.textContent = "\uD83D\uDC0C GPU"; } /* snail */
-  else if (dev === "cpu") { b.className = "spdBadge cpu"; b.textContent = "\uD83D\uDC07 CPU"; } /* hare */
+  if (dev === "cuda")     { b.className = "spdBadge gpu"; b.textContent = "\uD83D\uDC07 GPU"; } /* hare = fast */
+  else if (dev === "cpu") { b.className = "spdBadge cpu"; b.textContent = "\uD83D\uDC0C CPU"; } /* snail = slow */
   else                    { b.className = "spdBadge off"; b.textContent = "\u26AA \u96E2\u7DDA"; }
 }
 function _discProbe(base, ms) {
