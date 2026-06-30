@@ -386,8 +386,20 @@ textarea::placeholder { color: #6a8a6a; }
    (fast, GPU) via its current tunnel published to a gist; fall back to the
    always-on Hugging Face Space (CPU). The page URL never changes. */
 var BACKEND = "https://shidailun-gluban-translate.hf.space";                 /* current API base */
+var GLUBAN_DEV = null;              /* 'cuda' | 'cpu' — drives the badge + ETA */
 var GIST_DISC = "https://api.github.com/gists/245a976530b60245227620d916650c1e";
+/* Resilient fetch: if the chosen backend fails (e.g. the tunnel dropped), re-pick
+   a reachable one and retry once. No constant polling — only acts on a real failure. */
+function apiFetch(path, opts) {
+  return fetch(BACKEND + path, opts).then(function (r) {
+    if (r.status >= 500) throw new Error("server " + r.status);
+    return r;
+  }).catch(function () {
+    return Promise.resolve(pickBackend()).then(function () { return fetch(BACKEND + path, opts); });
+  });
+}
 function setSpeedBadge(dev) {
+  GLUBAN_DEV = dev || null;
   var b = document.getElementById("spdBadge"); if (!b) return;
   if (dev === "cuda")     { b.className = "spdBadge gpu"; b.textContent = "\uD83D\uDC07 GPU"; } /* hare = fast */
   else if (dev === "cpu") { b.className = "spdBadge cpu"; b.textContent = "\uD83D\uDC0C CPU"; } /* snail = slow */
@@ -412,8 +424,8 @@ function _discTunnel() {
 }
 var _discBusy = false;
 function pickBackend() {
-  if (_discBusy) return; _discBusy = true;
-  _discTunnel().then(function (tun) {
+  if (_discBusy) return Promise.resolve(); _discBusy = true;
+  return _discTunnel().then(function (tun) {
     if (tun) return _discProbe(tun).then(function (s) {
       if (s) { BACKEND = tun; setSpeedBadge(s.device); return true; } return false;
     });
@@ -426,7 +438,7 @@ function pickBackend() {
   }).catch(function () { _discBusy = false; });
 }
 pickBackend();
-setInterval(pickBackend, 20000);
+setInterval(pickBackend, 30000);   /* light background re-check; instant recovery is via apiFetch */
 </script>
 <script>
 let modelOut = "";
@@ -542,7 +554,7 @@ function showSettings() {
 // Show what this page is running on (CPU/GPU), read from /status.
 function populateSystemInfo() {
   (document.getElementById("sysDevice")||{}).textContent = "…";
-  fetch(BACKEND + "/status", { cache: "no-store" }).then(r => r.json()).then(j => {
+  apiFetch("/status", { cache: "no-store" }).then(r => r.json()).then(j => {
     (document.getElementById("sysDevice")||{}).textContent = j.device === "cuda" ? "GPU（CUDA）" : "CPU";
   }).catch(() => { (document.getElementById("sysDevice")||{}).textContent = "未知"; });
 }
@@ -597,7 +609,7 @@ async function doTranslate() {
   const fd = new FormData();
   fd.append("text", text); fd.append("src", src); fd.append("tgt", tgt);
   try {
-    const r = await fetch(BACKEND + "/translate", { method: "POST", body: fd });
+    const r = await apiFetch("/translate", { method: "POST", body: fd });
     if (!r.ok) throw new Error(await r.text());
     const j = await r.json();
     modelOut = j.result;
@@ -632,7 +644,7 @@ async function toggleMic(side) {
       fd.append("src", document.getElementById(langId).value);
       fd.append("native", document.getElementById("nativeChk").checked ? "1" : "0");
       try {
-        const r = await fetch(BACKEND + "/stt", { method: "POST", body: fd });
+        const r = await apiFetch("/stt", { method: "POST", body: fd });
         if (!r.ok) throw new Error(await r.text());
         const j = await r.json();
         document.getElementById(txtId).value = j.text;
@@ -659,7 +671,7 @@ async function playTTS(side) {
   const fd = new FormData();
   fd.append("text", text); fd.append("voice", voice);
   try {
-    const r = await fetch(BACKEND + "/tts", { method: "POST", body: fd });
+    const r = await apiFetch("/tts", { method: "POST", body: fd });
     if (!r.ok) throw new Error(await r.text());
     if (currentAudio) { try { currentAudio.pause(); } catch(_) {} }  // never overlap
     const url   = URL.createObjectURL(await r.blob());
@@ -685,7 +697,7 @@ async function saveCorrection() {
   fd.append("tgt", document.getElementById("tgtLang").value);
   fd.append("native", localStorage.getItem("gluban_native") === "1" ? "1" : "0");
   try {
-    await fetch(BACKEND + "/save_correction", { method: "POST", body: fd });
+    await apiFetch("/save_correction", { method: "POST", body: fd });
     markSaved(tgt);
     setStatus("✓ 已儲存");
   } catch(e) { setStatus("儲存錯誤：" + e); }
@@ -707,11 +719,32 @@ applyTint(localStorage.getItem("gluban_tint") || "0.42");
 onLangChange();
 const _poll = setInterval(async () => {
   try {
-    const j = await (await fetch(BACKEND + "/status")).json();
+    const j = await (await apiFetch("/status")).json();
     setStatus(j.ready ? "就緒" : "載入中…");
     if (j.ready) clearInterval(_poll);
   } catch(_) {}
 }, 2000);
+</script>
+<script>
+(function () {
+  var ETA = { "翻譯中…": { cuda: 2,  cpu: 9   },
+              "辨識中…": { cuda: 5,  cpu: 25  },
+              "合成中…": { cuda: 12, cpu: 170 } };
+  var orig = setStatus, timer = null;
+  setStatus = function (s) {
+    if (timer) { clearInterval(timer); timer = null; }
+    var e = ETA[s];
+    if (e) {
+      var dev = (typeof GLUBAN_DEV !== "undefined" && GLUBAN_DEV) ? GLUBAN_DEV : "cpu";
+      var rem = e[dev] || e.cpu;
+      orig(s + "（約 " + rem + " 秒）");
+      timer = setInterval(function () {
+        rem -= 1;
+        orig(rem > 0 ? s + "（約 " + rem + " 秒）" : s + "（即將完成…）");
+      }, 1000);
+    } else { orig(s); }
+  };
+})();
 </script>
 </body>
 </html>
