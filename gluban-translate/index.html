@@ -727,16 +727,14 @@ const _poll = setInterval(async () => {
 </script>
 <script>
 (function () {
-  var ETA = { "翻譯中…": { cuda: 2,  cpu: 9   },
-              "辨識中…": { cuda: 5,  cpu: 25  },
-              "合成中…": { cuda: 12, cpu: 170 } };
+  /* CPU-only ETA (seconds). GPU is near-instant, so no countdown there. */
+  var ETA = { "翻譯中…": 9, "辨識中…": 25, "合成中…": 170 };
   var orig = setStatus, timer = null;
   setStatus = function (s) {
     if (timer) { clearInterval(timer); timer = null; }
-    var e = ETA[s];
-    if (e) {
-      var dev = (typeof GLUBAN_DEV !== "undefined" && GLUBAN_DEV) ? GLUBAN_DEV : "cpu";
-      var rem = e[dev] || e.cpu;
+    var dev = (typeof GLUBAN_DEV !== "undefined" && GLUBAN_DEV) ? GLUBAN_DEV : "cpu";
+    var rem = ETA[s];
+    if (rem && dev === "cpu") {
       orig(s + "（約 " + rem + " 秒）");
       timer = setInterval(function () {
         rem -= 1;
