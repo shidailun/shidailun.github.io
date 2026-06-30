@@ -1,302 +1,718 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Gluban Translate · 賽德克語翻譯</title>
-<link rel="icon" href="https://shidailun-gluban-translate.hf.space/icon-192.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Gluban Translate</title>
+<meta name="theme-color" content="#0a100a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gluban">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  :root { --bg:#0e2410; --card:rgba(0,0,0,0.28); --line:#2a4a2a; --txt:#f2efe6; --accent:#8fd19e; }
-  html, body { height: 100%; }
-  body {
-    font-family: -apple-system, "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
-    color: var(--txt);
-    background: linear-gradient(160deg, #102a14, #0a1a0c 60%, #08120a);
-    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-    padding: 18px 14px 40px;
-  }
-  header { text-align: center; margin: 6px 0 14px; }
-  h1 { font-size: 1.5rem; letter-spacing: .5px; }
-  .sub { font-size: .8rem; opacity: .6; margin-top: 3px; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --tint: 0.42; }
+body {
+  background-color: #0a100a;
+  background-image:
+    linear-gradient(rgba(8,16,10,var(--tint)), rgba(8,16,10,var(--tint))),
+    url('bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  color: #d0e8d0;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+header {
+  padding: 14px 18px 6px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+h1 { font-size: 1.3rem; color: #ffffff; font-weight: 700; flex-shrink: 0; text-shadow: 0 1px 4px rgba(0,0,0,0.7); }
+#status { max-width: 860px; width: 100%; margin: 0 auto; padding: 0 16px 6px; font-size: 0.78rem; color: #d8f0d8; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
 
-  /* status + speed badge */
-  .statusbar {
-    display: flex; align-items: center; gap: 8px; justify-content: center;
-    margin: 10px 0 16px; min-height: 26px;
-  }
-  .badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: .78rem; font-weight: 700; padding: 3px 9px; border-radius: 999px;
-    border: 1px solid var(--line); background: #10240f;
-  }
-  .badge.gpu { color: #aef0ae; border-color: #3ad13a; }
-  .badge.cpu { color: #f0d8a0; border-color: #6a5a2a; }
-  .badge.off { color: #d99; border-color: #6a2a2a; }
-  #status { font-size: .92rem; opacity: .85; }
+.panels {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+  padding: 10px 14px 10px;
+  max-width: 860px;
+  width: 100%;
+  margin: 0 auto;
+}
 
-  .wrap { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 12px; }
-  .panel { background: var(--card); border: 1px solid rgba(255,255,255,.10); border-radius: 16px; padding: 12px; }
-  .row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-  select {
-    font: inherit; font-size: .95rem; font-weight: 600; color: var(--txt);
-    background: #10240f; border: 1px solid var(--line); border-radius: 9px; padding: 7px 10px;
-  }
-  textarea {
-    width: 100%; min-height: 84px; resize: vertical; font: inherit; font-size: 1.05rem;
-    color: var(--txt); background: #0a180b; border: 1px solid var(--line);
-    border-radius: 10px; padding: 11px 12px; line-height: 1.45;
-  }
-  textarea::placeholder { color: #6f8f6f; }
-  .foot { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
-  .iBtn {
-    font-size: 1.1rem; background: #10240f; border: 1px solid var(--line);
-    border-radius: 9px; padding: 7px 11px; cursor: pointer; color: var(--txt);
-  }
-  .iBtn:hover { background: #163516; }
-  .iBtn.rec { background: #5a1a1a; border-color: #d14a4a; }
-  label.chk { font-size: .82rem; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; opacity: .9; }
-  .swap { align-self: center; }
-  .swapBtn { font-size: 1.2rem; background: none; border: 0; color: var(--accent); cursor: pointer; }
-  .goBtn {
-    font: inherit; font-size: 1.05rem; font-weight: 700; color: #0e2410; background: var(--accent);
-    border: 0; border-radius: 11px; padding: 12px; cursor: pointer; width: 100%;
-  }
-  .goBtn:hover { background: #a3dcb0; }
-  .goBtn:disabled { opacity: .5; cursor: default; }
+.panel {
+  flex: 1;
+  background: rgba(20,40,20,0.55);
+  border: 1px solid rgba(120,180,120,0.35);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+.panel-head {
+  padding: 8px 12px;
+  border-bottom: 1px solid #1a3a1a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+select {
+  background: transparent;
+  border: none;
+  color: #c0dcc0;
+  font-size: 0.88rem;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 4px;
+}
+select option { background: #0d1a0d; color: #c0dcc0; }
+textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #e8f8e8;
+  font-size: 1rem;
+  font-family: inherit;
+  padding: 12px 14px;
+  resize: none;
+  outline: none;
+  min-height: 70px;
+  line-height: 1.55;
+}
+textarea::placeholder { color: #6a8a6a; }
+.panel-foot {
+  padding: 6px 10px;
+  border-top: 1px solid #1a3a1a;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.iBtn {
+  background: none;
+  border: none;
+  color: #6aaa7a;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 5px 7px;
+  border-radius: 7px;
+  transition: background 0.12s, color 0.12s;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+.iBtn:hover, .iBtn:active { background: #1a3a1a; color: #aadaaa; }
+.iBtn.rec { color: #cc4444; }
+.iBtn.busy { opacity: 0.45; pointer-events: none; }
+.lbl { font-size: 0.72rem; color: #f0fff0; font-weight: 600; padding-left: 2px; text-shadow: 0 1px 3px rgba(0,0,0,0.85); }
+.autospk { font-size: 0.72rem; color: #e8f8e8; display: inline-flex; align-items: center; gap: 3px; cursor: pointer; text-shadow: 0 1px 3px rgba(0,0,0,0.85); }
+.autospk input { accent-color: #4a9a6a; width: 17px; height: 17px; }
+.divbar { display: inline-block; width: 1px; height: 16px; background: rgba(120,180,120,0.45); margin: 0 4px; vertical-align: middle; }
+.xBtn {
+  margin-left: auto;
+  background: #0e2a0e;
+  border: 1px solid #2a4a2a;
+  color: #6aaa7a;
+  font-size: 0.75rem;
+  border-radius: 7px;
+  padding: 4px 10px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.xBtn:hover, .xBtn:active { background: #1a4a1a; }
 
-  /* alternatives */
-  #alts { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
-  .altLbl { font-size: .68rem; color: #9cc89c; font-weight: 700; letter-spacing: .5px; }
-  .altChip {
-    display: block; width: 100%; text-align: left; background: #0e2a0e; border: 1px solid var(--line);
-    color: #cfeccf; border-radius: 8px; padding: 8px 12px; font: inherit; font-size: .95rem; cursor: pointer;
-  }
-  .altChip:hover { background: #1a4a1a; }
-  .ver { position: fixed; right: 10px; bottom: 8px; font-size: .68rem; opacity: .4; }
+/* swap column */
+.mid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+#swapBtn {
+  background: rgba(20,40,20,0.55);
+  border: 1px solid #1e3a1e;
+  color: #4a9a6a;
+  font-size: 1.3rem;
+  border-radius: 9px;
+  padding: 8px 9px;
+  cursor: pointer;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+#swapBtn:hover, #swapBtn:active { background: #1a3a1a; }
+
+/* About */
+.aboutBtn {
+  margin-left: auto;
+  flex-shrink: 0;
+  background: rgba(20,40,20,0.5);
+  border: 1px solid rgba(120,180,120,0.4);
+  color: #d8f0d8;
+  font-family: inherit;
+  font-size: 0.82rem;
+  border-radius: 8px;
+  padding: 4px 12px;
+  cursor: pointer;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  -webkit-tap-highlight-color: transparent;
+}
+.aboutBtn:hover, .aboutBtn:active { background: #1a4a1a; }
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 50;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+.aboutBox {
+  background: rgba(16,30,16,0.96);
+  border: 1px solid rgba(120,180,120,0.4);
+  border-radius: 16px;
+  max-width: 460px;
+  width: 100%;
+  max-height: 86dvh;
+  overflow-y: auto;
+  padding: 22px 22px 18px;
+  color: #e2f4e2;
+  line-height: 1.7;
+}
+.aboutBox h2 { font-size: 1.15rem; color: #fff; margin-bottom: 12px; }
+.aboutBox p { margin-bottom: 10px; font-size: 0.95rem; }
+.aboutBox ul { margin: 0 0 10px 1.1em; }
+.aboutBox li { margin-bottom: 4px; font-size: 0.95rem; }
+.setLbl { font-size: 0.8rem; color: #8fc89f; font-weight: 600; margin: 14px 0 8px; text-transform: none; }
+.setLbl:first-of-type { margin-top: 4px; }
+.setRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; font-size: 0.95rem; }
+.setRow select { background: rgba(20,40,20,0.6); color: #e2f4e2; border: 1px solid rgba(120,180,120,0.4); border-radius: 6px; padding: 3px 6px; font-family: inherit; }
+.setRow .arrow { color: #9cd8b0; padding: 0 4px; }
+.setRow .sysv { color: #9cd8b0; font-weight: 600; text-align: right; }
+.accRow { display:flex; align-items:center; justify-content:space-between; gap:10px;
+  background:#0a160a; border:1px solid #2a4a2a; border-radius:8px; padding:9px 12px; margin-bottom:7px; }
+.accRow.active { border-color:#3ad13a; background:#10240f; }
+.accRow.tappable { cursor:pointer; }
+.accRow.tappable:hover, .accRow.tappable:active { background:#10240f; }
+.accRow.disabled { opacity:0.5; }
+.accLbl { color:#cfeccf; font-size:0.92rem; font-weight:600; }
+.accSt { color:#7a9a7a; font-size:0.8rem; font-weight:700; }
+.accRow.active .accSt { color:#aadaaa; }
+.setRow .iBtn { margin-left: 6px; }
+.verTxt { text-align: center; color: #6a8a6a; font-size: 0.75rem; margin-top: 16px; }
+#verBadge { position: fixed; right: 8px; bottom: 6px; color: rgba(180,210,180,0.55); font-size: 11px; pointer-events: none; z-index: 40; text-shadow: 0 1px 2px rgba(0,0,0,0.7); }
+
+/* alternative translations */
+.altsBox { padding: 4px 12px 8px; border-top: 1px solid #1a3a1a; }
+.altsLbl { font-size: 0.68rem; color: #9cc89c; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 5px; }
+.altChip { display: block; width: 100%; text-align: left; background: #0e2a0e; border: 1px solid #2a4a2a; color: #cfeccf; border-radius: 8px; padding: 7px 12px; margin-bottom: 6px; font-size: 0.95rem; font-family: inherit; line-height: 1.4; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.altChip:hover, .altChip:active { background: #1a4a1a; }
+
+/* history / transcript */
+.history {
+  flex: 1;
+  overflow-y: auto;
+  max-width: 860px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 4px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 80px;
+}
+.hItem {
+  background: rgba(20,40,20,0.42);
+  border: 1px solid rgba(120,180,120,0.25);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.hItem .hSrc { color: #cfeccf; }
+.hItem .hTgt { color: #a9d9b9; }
+.hItem.saved { border-color: #3a9a5a; }
+.hItem .hMark { color: #6ad08a; font-size: 0.72rem; float: right; }
+.hEmpty { color: #6a8a6a; font-size: 0.8rem; text-align: center; padding: 12px; }
+
+/* portrait orientation: stack vertically; landscape: side by side */
+@media (orientation: portrait) {
+  .panels { flex-direction: column; gap: 8px; padding: 8px 10px 8px; }
+  .mid { flex-direction: row; }
+  #swapBtn { transform: rotate(90deg); }
+  textarea { min-height: 56px; }
+}
+
+.spdBadge { display:inline-flex; align-items:center; gap:4px; font-size:0.72rem; font-weight:700;
+  padding:2px 9px; border-radius:999px; border:1px solid #2a4a2a; background:#10240f;
+  vertical-align:middle; white-space:nowrap; text-shadow:none; }
+.spdBadge.gpu { color:#aef0ae; border-color:#3ad13a; }
+.spdBadge.cpu { color:#f0d8a0; border-color:#6a5a2a; }
+.spdBadge.off { color:#e0a0a0; border-color:#6a2a2a; }
 </style>
 </head>
 <body>
-  <header>
-    <h1>Gluban Translate</h1>
-    <p class="sub">賽德克語翻譯 · Seediq ⇄ 中文 / English</p>
-  </header>
+<header>
+  <h1>Gluban Translate</h1>
+  <button class="aboutBtn" style="margin-left:auto;" onclick="showSettings()">設定</button>
+  <button class="aboutBtn" style="margin-left:6px;" onclick="showAbout()">關於</button>
+</header>
 
-  <div class="statusbar">
-    <span id="badge" class="badge off">⚪ —</span>
-    <span id="status">尋找伺服器…</span>
+<div class="panels">
+  <div class="panel">
+    <div class="panel-head">
+      <select id="srcLang" onchange="onLangChange('src')">
+        <option value="sdq_Latn">賽德克語</option>
+        <option value="zho_Hans">中文</option>
+        <option value="eng_Latn">英文</option>
+      </select>
+    </div>
+    <textarea id="srcTxt" placeholder="輸入或錄音"
+              onkeydown="onKey(event)"></textarea>
+    <div class="panel-foot">
+      <button class="iBtn" id="micBtn" onclick="toggleMic('src')">🎤</button>
+      <label class="autospk" id="nativeLbl"><input type="checkbox" id="nativeChk" onchange="saveNative(this)"> 我是母語者</label>
+      <span class="divbar" id="divSrc"></span>
+      <span class="lbl" id="lblSrc">Pawan Nawi</span>
+      <button class="iBtn" id="playSrc" onclick="playTTS('src')">▶</button>
+      <button class="xBtn" onclick="doTranslate()" style="margin-left:auto;">翻譯 →</button>
+    </div>
   </div>
 
-  <div class="wrap">
-    <!-- source -->
-    <div class="panel">
-      <div class="row">
-        <select id="srcLang" onchange="onLang('src')"></select>
-      </div>
-      <textarea id="srcTxt" placeholder="輸入文字…"></textarea>
-      <div class="foot">
-        <button class="iBtn" id="micBtn" onclick="toggleMic()" title="錄音辨識">🎤</button>
-        <label class="chk"><input type="checkbox" id="nativeChk"> 我是母語者</label>
-      </div>
-    </div>
-
-    <div class="swap"><button class="swapBtn" onclick="swap()" title="對調">⇅</button></div>
-
-    <!-- target -->
-    <div class="panel">
-      <div class="row">
-        <select id="tgtLang" onchange="onLang('tgt')"></select>
-      </div>
-      <textarea id="tgtTxt" placeholder="翻譯…" readonly></textarea>
-      <div id="alts"></div>
-      <div class="foot">
-        <button class="iBtn" id="spkBtn" onclick="speak(document.getElementById('tgtTxt').value)" title="朗讀">🔊</button>
-        <label class="chk"><input type="checkbox" id="autoChk"> 自動朗讀</label>
-      </div>
-    </div>
-
-    <button class="goBtn" id="goBtn" onclick="translate()">翻譯</button>
+  <div class="mid">
+    <button id="swapBtn" onclick="swapLangs()" title="Swap">⇄</button>
   </div>
 
-  <p class="ver">網頁版 v1.2.0</p>
+  <div class="panel">
+    <div class="panel-head">
+      <select id="tgtLang" onchange="onLangChange('tgt')">
+        <option value="sdq_Latn">賽德克語</option>
+        <option value="zho_Hans" selected>中文</option>
+        <option value="eng_Latn">英文</option>
+      </select>
+    </div>
+    <textarea id="tgtTxt" placeholder="翻譯…"></textarea>
+    <div class="altsBox" id="altsBox" style="display:none;">
+      <div class="altsLbl">其他翻譯</div>
+      <div id="altsList"></div>
+    </div>
+    <div class="panel-foot">
+      <button class="iBtn" id="micBtn2" onclick="toggleMic('tgt')">🎤</button>
+      <label class="autospk" id="nativeLbl2"><input type="checkbox" id="nativeChk2" onchange="saveNative(this)"> 我是母語者</label>
+      <span class="divbar" id="divTgt"></span>
+      <span class="lbl" id="lblTgt">Temi Nawi</span>
+      <button class="iBtn" id="playTgt" onclick="playTTS('tgt')">▶</button>
+      <button class="xBtn" id="saveBtn" onclick="saveCorrection()" style="margin-left:auto;">💾 儲存</button>
+    </div>
+  </div>
+</div>
+
+<div id="statusbar" style="max-width:860px;width:100%;margin:0 auto;padding:0 16px 6px;display:flex;align-items:center;gap:8px;"><span id="spdBadge" class="spdBadge off">⚪ —</span><span id="status" style="margin:0;padding:0;width:auto;font-size:0.78rem;color:#d8f0d8;text-shadow:0 1px 3px rgba(0,0,0,0.8);">載入模型中…</span></div>
+
+<div class="history" id="history">
+</div>
+
+<div id="verBadge">網頁版 v1.2.0</div>
+
+<div id="aboutOverlay" class="overlay" onclick="hideAbout(event)">
+  <div class="aboutBox">
+    <h2>關於 Gluban Translate</h2>
+    <p>本工具提供三項功能：</p>
+    <ul>
+      <li>機器翻譯（MT）：賽德克語 ↔ 中文 ↔ 英文</li>
+      <li>語音辨識（STT）：將賽德克語說話轉成文字</li>
+      <li>語音合成（TTS）：以 Pawan Nawi 與 Temi Nawi 的聲音朗讀賽德克語</li>
+    </ul>
+    <p>本系統之所以取名為 Gluban Translate，是因為 Pawan Nawi（弟弟）與 Temi Nawi（姊姊）都來自 Alang Gluban（清流部落）。</p>
+    <p>翻譯成賽德克語時若有錯誤，請修改後按「儲存」。這些修正會以「人在迴圈」（human-in-the-loop）的方式，持續讓系統變得更好。</p>
+    <p>為改善賽德克語 AI，您的麥克風錄音與修正內容會被儲存供研究使用。</p>
+    <p>意見回饋：<a href="mailto:shidailun@gmail.com" style="color:#9cd8b0;">shidailun@gmail.com</a></p>
+    <button class="xBtn" onclick="hideAbout()" style="margin-top:14px;">關閉</button>
+  </div>
+</div>
+
+<div id="settingsOverlay" class="overlay" onclick="hideSettings(event)">
+  <div class="aboutBox">
+    <h2>設定</h2>
+
+    <div class="setLbl">顯示與語音</div>
+    <label class="setRow" style="cursor:pointer;">
+      <span>自動朗讀翻譯</span>
+      <input type="checkbox" id="setAutoSpeak" onchange="toggleAutoSpeakSetting(this)">
+    </label>
+    <div class="setRow">
+      <span>背景亮度</span>
+      <span>
+        <button class="iBtn" onclick="adjustBrightness(-1)">🌙</button>
+        <button class="iBtn" onclick="adjustBrightness(1)">☀</button>
+      </span>
+    </div>
+    <div class="setRow">
+      <span>預設語言</span>
+      <span>
+        <select id="setDefSrc" onchange="saveDefLang()">
+          <option value="sdq_Latn">賽德克語</option>
+          <option value="zho_Hans">中文</option>
+          <option value="eng_Latn">英文</option>
+        </select>
+        <span class="arrow">→</span>
+        <select id="setDefTgt" onchange="saveDefLang()">
+          <option value="sdq_Latn">賽德克語</option>
+          <option value="zho_Hans">中文</option>
+          <option value="eng_Latn">英文</option>
+        </select>
+      </span>
+    </div>
+
+    <div class="setRow"><span>運算</span><span class="sysv" id="sysDevice">…</span></div>
+
+    <p class="verTxt">網頁版 · v1.1.7</p>
+    <button class="xBtn" onclick="hideSettings()" style="margin-top:14px;">關閉</button>
+  </div>
+</div>
 
 <script>
-  // ---- backends -------------------------------------------------------------
-  // The app is a static page; it talks to a backend over its public API.
-  // Prefer the laptop (fast, GPU) via its current tunnel, published to a gist;
-  // fall back to the always-on Hugging Face Space (CPU). The page URL never
-  // changes — only the backend behind it does.
-  const SPACE    = "https://shidailun-gluban-translate.hf.space";
-  const GIST_API = "https://api.github.com/gists/245a976530b60245227620d916650c1e";
-  let API = SPACE;            // current backend base URL
-  let busy = false;          // a translate/tts/stt is in flight
-
-  const LANGS = [
-    { code: "sdq_Latn", name: "賽德克語" },
-    { code: "zho_Hans", name: "中文" },
-    { code: "eng_Latn", name: "英文" },
-  ];
-
-  const $ = (id) => document.getElementById(id);
-  function setStatus(s) { $("status").textContent = s; }
-
-  function setBadge(device) {
-    const b = $("badge");
-    if (device === "cuda")      { b.className = "badge gpu"; b.textContent = "🐇 GPU"; }
-    else if (device === "cpu")  { b.className = "badge cpu"; b.textContent = "🐢 CPU"; }
-    else                        { b.className = "badge off"; b.textContent = "⚪ 離線"; }
-  }
-
-  async function probe(base, ms) {
-    try {
-      const c = new AbortController();
-      const t = setTimeout(() => c.abort(), ms || 3500);
-      const r = await fetch(base + "/status", { signal: c.signal, cache: "no-store" });
-      clearTimeout(t);
-      return r.ok ? await r.json() : null;
-    } catch (e) { return null; }
-  }
-
-  async function tunnelUrl() {
-    try {
-      const r = await fetch(GIST_API + "?_=" + Date.now(), { cache: "no-store" });
-      if (r.ok) {
-        const j = await r.json();
-        const t = (((j.files || {})["gluban_server.txt"] || {}).content || "").trim();
-        if (/^https?:\/\//.test(t)) return t;
-      }
-    } catch (e) {}
-    return "";
-  }
-
-  // Choose the fastest reachable backend and reflect it in the badge.
-  async function pickBackend() {
-    if (busy) return;                                   // never switch mid-request
-    const tun = await tunnelUrl();
-    if (tun) {
-      const s = await probe(tun);
-      if (s) { API = tun; setBadge(s.device); if ($("status").textContent === "尋找伺服器…") setStatus("就緒"); return; }
-    }
-    const s = await probe(SPACE, 8000);                 // Space may be waking
-    API = SPACE;
-    setBadge(s ? s.device : null);
-    if ($("status").textContent === "尋找伺服器…") setStatus(s ? "就緒" : "雲端喚醒中…");
-  }
-
-  // ---- language UI ----------------------------------------------------------
-  function fillLangs() {
-    for (const sel of [$("srcLang"), $("tgtLang")]) {
-      sel.innerHTML = LANGS.map(l => `<option value="${l.code}">${l.name}</option>`).join("");
-    }
-    $("srcLang").value = "zho_Hans";
-    $("tgtLang").value = "sdq_Latn";
-  }
-  function onLang(changed) {
-    const sl = $("srcLang"), tl = $("tgtLang");
-    if (sl.value === tl.value) {                         // src and tgt can never match
-      const other = LANGS.map(l => l.code).find(c => c !== (changed === "src" ? sl.value : tl.value));
-      if (changed === "src") tl.value = other; else sl.value = other;
-    }
-  }
-  function swap() {
-    const sl = $("srcLang"), tl = $("tgtLang"), st = $("srcTxt"), tt = $("tgtTxt");
-    [sl.value, tl.value] = [tl.value, sl.value];
-    [st.value, tt.value] = [tt.value, st.value];
-    renderAlts([]);
-  }
-
-  // ---- translate ------------------------------------------------------------
-  async function translate() {
-    const text = $("srcTxt").value.trim();
-    const src = $("srcLang").value, tgt = $("tgtLang").value;
-    if (!text || src === tgt) return;
-    busy = true; $("goBtn").disabled = true; setStatus("翻譯中…"); renderAlts([]);
-    try {
-      const fd = new FormData();
-      fd.append("text", text); fd.append("src", src); fd.append("tgt", tgt);
-      const r = await fetch(API + "/translate", { method: "POST", body: fd });
-      if (!r.ok) throw new Error(await r.text());
-      const j = await r.json();
-      $("tgtTxt").value = j.result;
-      renderAlts(j.alternatives);
-      setStatus("就緒");
-      if ($("autoChk").checked && tgt === "sdq_Latn") speak(j.result);
-    } catch (e) {
-      setStatus("翻譯失敗");
-    } finally {
-      busy = false; $("goBtn").disabled = false;
-    }
-  }
-
-  function renderAlts(list) {
-    const box = $("alts");
-    box.innerHTML = "";
-    const alts = Array.isArray(list) ? list.slice(0, 2) : [];
-    if (!alts.length) return;
-    const lbl = document.createElement("div"); lbl.className = "altLbl"; lbl.textContent = "其他翻譯";
-    box.appendChild(lbl);
-    alts.forEach(a => {
-      const b = document.createElement("button");
-      b.className = "altChip"; b.type = "button"; b.textContent = a;
-      b.onclick = () => { const cur = $("tgtTxt").value; $("tgtTxt").value = a; renderAlts([cur, ...alts.filter(x => x !== a)].filter(Boolean)); };
-      box.appendChild(b);
+/* Backend discovery for the static GitHub Pages client. Prefer the laptop
+   (fast, GPU) via its current tunnel published to a gist; fall back to the
+   always-on Hugging Face Space (CPU). The page URL never changes. */
+var BACKEND = "https://shidailun-gluban-translate.hf.space";                 /* current API base */
+var GIST_DISC = "https://api.github.com/gists/245a976530b60245227620d916650c1e";
+function setSpeedBadge(dev) {
+  var b = document.getElementById("spdBadge"); if (!b) return;
+  if (dev === "cuda")     { b.className = "spdBadge gpu"; b.textContent = "\uD83D\uDC0C GPU"; } /* snail */
+  else if (dev === "cpu") { b.className = "spdBadge cpu"; b.textContent = "\uD83D\uDC07 CPU"; } /* hare */
+  else                    { b.className = "spdBadge off"; b.textContent = "\u26AA \u96E2\u7DDA"; }
+}
+function _discProbe(base, ms) {
+  return new Promise(function (resolve) {
+    var c = new AbortController(); var t = setTimeout(function(){c.abort();}, ms||3500);
+    fetch(base + "/status", { signal: c.signal, cache: "no-store" })
+      .then(function (r) { clearTimeout(t); resolve(r.ok ? r.json() : null); })
+      .catch(function () { resolve(null); });
+  });
+}
+function _discTunnel() {
+  return fetch(GIST_DISC + "?_=" + Date.now(), { cache: "no-store" })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (j) {
+      if (!j) return "";
+      var t = (((j.files || {})["gluban_server.txt"] || {}).content || "").trim();
+      return /^https?:\/\//.test(t) ? t : "";
+    }).catch(function () { return ""; });
+}
+var _discBusy = false;
+function pickBackend() {
+  if (_discBusy) return; _discBusy = true;
+  _discTunnel().then(function (tun) {
+    if (tun) return _discProbe(tun).then(function (s) {
+      if (s) { BACKEND = tun; setSpeedBadge(s.device); return true; } return false;
     });
-  }
+    return false;
+  }).then(function (gotTunnel) {
+    if (gotTunnel) { _discBusy = false; return; }
+    _discProbe("https://shidailun-gluban-translate.hf.space", 8000).then(function (s) {
+      BACKEND = "https://shidailun-gluban-translate.hf.space"; setSpeedBadge(s ? s.device : null); _discBusy = false;
+    });
+  }).catch(function () { _discBusy = false; });
+}
+pickBackend();
+setInterval(pickBackend, 20000);
+</script>
+<script>
+let modelOut = "";
+let recorder = null, recChunks = [], recording = false;
+let lastItem = null;
+let currentAudio = null;   // the one TTS clip allowed to play at a time
+const LANG_NAME = {sdq_Latn:"賽德克語", zho_Hans:"中文", eng_Latn:"英文"};
 
-  // ---- text-to-speech -------------------------------------------------------
-  let audio = null;
-  async function speak(text) {
-    text = (text || "").trim();
-    if (!text || $("tgtLang").value !== "sdq_Latn") return;
-    if (busy) return;
-    busy = true; setStatus("合成中…");
-    try {
+function setStatus(s) { document.getElementById("status").textContent = s; }
+function saveNative(el) { const v = el.checked; localStorage.setItem("gluban_native", v ? "1" : "0"); document.getElementById("nativeChk").checked = v; document.getElementById("nativeChk2").checked = v; }
+
+function esc(s) {
+  return s.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+}
+
+function addHistory(srcText, tgtText, srcCode, tgtCode) {
+  const empty = document.getElementById("hEmpty");
+  if (empty) empty.remove();
+  const div = document.createElement("div");
+  div.className = "hItem";
+  div.innerHTML =
+    '<div class="hSrc">' + esc(LANG_NAME[srcCode] || srcCode) + ': ' + esc(srcText) + '</div>' +
+    '<div class="hTgt">' + esc(LANG_NAME[tgtCode] || tgtCode) + ': ' + esc(tgtText) + '</div>';
+  const h = document.getElementById("history");
+  h.insertBefore(div, h.firstChild);   // newest on top
+  lastItem = { el: div, tgtCode };
+  return div;
+}
+
+function markSaved(corrected) {
+  if (!lastItem) return;
+  lastItem.el.classList.add("saved");
+  if (!lastItem.el.querySelector(".hMark")) {
+    const m = document.createElement("span");
+    m.className = "hMark"; m.textContent = "✓ saved";
+    lastItem.el.querySelector(".hTgt").appendChild(m);
+  }
+  lastItem.el.querySelector(".hTgt").firstChild.textContent =
+    (LANG_NAME[lastItem.tgtCode] || lastItem.tgtCode) + ': ' + corrected;
+}
+
+function onKey(e) {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); doTranslate(); }
+}
+
+// Other beam/sampling translations to choose from (matches the phone app).
+function renderAlts(list) {
+  const box = document.getElementById("altsBox");
+  const ul  = document.getElementById("altsList");
+  ul.innerHTML = "";
+  const alts = Array.isArray(list) ? list.slice(0, 2) : [];
+  if (!alts.length) { box.style.display = "none"; return; }
+  alts.forEach(a => {
+    const b = document.createElement("button");
+    b.className = "altChip"; b.type = "button";
+    b.textContent = a;
+    b.onclick = () => pickAlt(a);
+    ul.appendChild(b);
+  });
+  box.style.display = "";
+}
+
+// Promote a chosen alternative to the main result; demote the current one back
+// into the list so nothing is lost.
+function pickAlt(a) {
+  const tt = document.getElementById("tgtTxt");
+  const cur = tt.value.trim();
+  const others = [...document.querySelectorAll("#altsList .altChip")]
+    .map(x => x.textContent).filter(x => x !== a);
+  if (cur && cur !== a) others.unshift(cur);
+  tt.value = a;
+  modelOut = a;
+  renderAlts(others);
+}
+
+function onLangChange(changed) {
+  const sl = document.getElementById("srcLang");
+  const tl = document.getElementById("tgtLang");
+  if (sl.value === tl.value) {                 // src and tgt can never match
+    const codes = ["sdq_Latn", "zho_Hans", "eng_Latn"];
+    if (changed === "tgt") sl.value = codes.find(c => c !== tl.value);
+    else                   tl.value = codes.find(c => c !== sl.value);
+  }
+  const src = sl.value, tgt = tl.value;
+  const sdqSrc = src === "sdq_Latn", sdqTgt = tgt === "sdq_Latn";
+  document.getElementById("micBtn").style.display  = sdqSrc ? "" : "none";
+  document.getElementById("playSrc").style.display = sdqSrc ? "" : "none";
+  document.getElementById("lblSrc").style.display  = sdqSrc ? "" : "none";
+  document.getElementById("nativeLbl").style.display = sdqSrc ? "" : "none";
+  document.getElementById("divSrc").style.display = sdqSrc ? "" : "none";
+  document.getElementById("micBtn2").style.display = sdqTgt ? "" : "none";
+  document.getElementById("playTgt").style.display = sdqTgt ? "" : "none";
+  document.getElementById("lblTgt").style.display  = sdqTgt ? "" : "none";
+  document.getElementById("nativeLbl2").style.display = sdqTgt ? "" : "none";
+  document.getElementById("divTgt").style.display = sdqTgt ? "" : "none";
+}
+
+function showAbout() { document.getElementById("aboutOverlay").style.display = "flex"; }
+function hideAbout(e) {
+  if (!e || e.target.id === "aboutOverlay") {
+    document.getElementById("aboutOverlay").style.display = "none";
+  }
+}
+
+function showSettings() {
+  document.getElementById("setAutoSpeak").checked = localStorage.getItem("gluban_autospeak") === "1";
+  document.getElementById("setDefSrc").value = document.getElementById("srcLang").value;
+  document.getElementById("setDefTgt").value = document.getElementById("tgtLang").value;
+  document.getElementById("settingsOverlay").style.display = "flex";
+  populateSystemInfo();
+}
+
+// Show what this page is running on (CPU/GPU), read from /status.
+function populateSystemInfo() {
+  document.getElementById("sysDevice").textContent = "…";
+  fetch(BACKEND + "/status", { cache: "no-store" }).then(r => r.json()).then(j => {
+    document.getElementById("sysDevice").textContent = j.device === "cuda" ? "GPU（CUDA）" : "CPU";
+  }).catch(() => { document.getElementById("sysDevice").textContent = "未知"; });
+}
+
+function hideSettings(e) {
+  if (!e || e.target.id === "settingsOverlay") {
+    document.getElementById("settingsOverlay").style.display = "none";
+  }
+}
+function toggleAutoSpeakSetting(el) {
+  localStorage.setItem("gluban_autospeak", el.checked ? "1" : "0");
+}
+function saveDefLang() {
+  const s = document.getElementById("setDefSrc");
+  const t = document.getElementById("setDefTgt");
+  if (s.value === t.value) {                    // src and tgt can never match
+    t.value = ["sdq_Latn", "zho_Hans", "eng_Latn"].find(c => c !== s.value);
+  }
+  localStorage.setItem("gluban_defsrc", s.value);
+  localStorage.setItem("gluban_deftgt", t.value);
+  document.getElementById("srcLang").value = s.value;
+  document.getElementById("tgtLang").value = t.value;
+  onLangChange();
+}
+function applyTint(a) { document.documentElement.style.setProperty("--tint", a); }
+function adjustBrightness(dir) {      // dir +1 = brighter (less tint), -1 = dimmer
+  let a = parseFloat(localStorage.getItem("gluban_tint") || "0.42");
+  a = Math.min(0.8, Math.max(0.12, a - dir * 0.08));
+  localStorage.setItem("gluban_tint", String(a));
+  applyTint(a);
+}
+
+function swapLangs() {
+  const sl = document.getElementById("srcLang");
+  const tl = document.getElementById("tgtLang");
+  const st = document.getElementById("srcTxt");
+  const tt = document.getElementById("tgtTxt");
+  [sl.value, tl.value] = [tl.value, sl.value];
+  [st.value, tt.value] = [tt.value, st.value];
+  modelOut = "";
+  renderAlts([]);
+  onLangChange();
+}
+
+async function doTranslate() {
+  const text = document.getElementById("srcTxt").value.trim();
+  if (!text) return;
+  const src = document.getElementById("srcLang").value;
+  const tgt = document.getElementById("tgtLang").value;
+  if (src === tgt) return;
+  setStatus("翻譯中…");
+  const fd = new FormData();
+  fd.append("text", text); fd.append("src", src); fd.append("tgt", tgt);
+  try {
+    const r = await fetch(BACKEND + "/translate", { method: "POST", body: fd });
+    if (!r.ok) throw new Error(await r.text());
+    const j = await r.json();
+    modelOut = j.result;
+    document.getElementById("tgtTxt").value = j.result;
+    renderAlts(j.alternatives);
+    addHistory(text, j.result, src, tgt);
+    setStatus("就緒");
+    if (localStorage.getItem("gluban_autospeak") === "1" && tgt === "sdq_Latn") playTTS("tgt");
+  } catch(e) { setStatus("錯誤：" + e); }
+}
+
+async function toggleMic(side) {
+  side = side || "src";
+  const btnId  = side === "src" ? "micBtn"  : "micBtn2";
+  const langId = side === "src" ? "srcLang" : "tgtLang";
+  const txtId  = side === "src" ? "srcTxt"  : "tgtTxt";
+  if (recording) { recorder && recorder.stop(); return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    recChunks = [];
+    recorder  = new MediaRecorder(stream);
+    recorder.ondataavailable = e => recChunks.push(e.data);
+    recorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      recording = false;
+      const btn = document.getElementById(btnId);
+      btn.classList.remove("rec"); btn.textContent = "🎤";
+      setStatus("辨識中…");
+      const blob = new Blob(recChunks, { type: recorder.mimeType });
       const fd = new FormData();
-      fd.append("text", text); fd.append("voice", "Pawan Nawi");
-      const r = await fetch(API + "/tts", { method: "POST", body: fd });
-      if (!r.ok) throw new Error();
-      const blob = await r.blob();
-      if (audio) { audio.pause(); }
-      audio = new Audio(URL.createObjectURL(blob));
-      audio.play();
-      setStatus("就緒");
-    } catch (e) {
-      setStatus("語音失敗");
-    } finally { busy = false; }
-  }
+      fd.append("audio", blob, "audio.webm");
+      fd.append("src", document.getElementById(langId).value);
+      fd.append("native", document.getElementById("nativeChk").checked ? "1" : "0");
+      try {
+        const r = await fetch(BACKEND + "/stt", { method: "POST", body: fd });
+        if (!r.ok) throw new Error(await r.text());
+        const j = await r.json();
+        document.getElementById(txtId).value = j.text;
+        if (side === "src") doTranslate(); else setStatus("就緒");
+      } catch(e) { setStatus("辨識錯誤：" + e); }
+    };
+    recorder.start();
+    recording = true;
+    const btn = document.getElementById(btnId);
+    btn.classList.add("rec"); btn.textContent = "⏹";
+    setStatus("錄音中…點 ⏹ 停止");
+  } catch(e) { setStatus("麥克風錯誤：" + e); }
+}
 
-  // ---- speech-to-text (mic) -------------------------------------------------
-  let rec = null, chunks = [];
-  async function toggleMic() {
-    if (rec && rec.state === "recording") { rec.stop(); return; }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      rec = new MediaRecorder(stream); chunks = [];
-      rec.ondataavailable = e => chunks.push(e.data);
-      rec.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop());
-        $("micBtn").classList.remove("rec");
-        busy = true; setStatus("辨識中…");
-        try {
-          const fd = new FormData();
-          fd.append("audio", new Blob(chunks, { type: "audio/webm" }), "rec.webm");
-          fd.append("src", $("srcLang").value);
-          fd.append("native", $("nativeChk").checked ? "1" : "0");
-          const r = await fetch(API + "/stt", { method: "POST", body: fd });
-          const j = await r.json();
-          $("srcTxt").value = j.text || "";
-          setStatus($("srcTxt").value ? "就緒" : "未辨識到內容");
-        } catch (e) { setStatus("辨識失敗"); }
-        finally { busy = false; }
-      };
-      rec.start(); $("micBtn").classList.add("rec"); setStatus("錄音中…（再按一次停止）");
-    } catch (e) { setStatus("麥克風無法使用"); }
-  }
+async function playTTS(side) {
+  const text = side === "src"
+    ? document.getElementById("srcTxt").value.trim()
+    : document.getElementById("tgtTxt").value.trim();
+  if (!text) return;
+  const voice = side === "src" ? "Pawan Nawi" : "Temi Nawi";
+  const btn   = document.getElementById(side === "src" ? "playSrc" : "playTgt");
+  btn.classList.add("busy");
+  setStatus("合成中…");
+  const fd = new FormData();
+  fd.append("text", text); fd.append("voice", voice);
+  try {
+    const r = await fetch(BACKEND + "/tts", { method: "POST", body: fd });
+    if (!r.ok) throw new Error(await r.text());
+    if (currentAudio) { try { currentAudio.pause(); } catch(_) {} }  // never overlap
+    const url   = URL.createObjectURL(await r.blob());
+    const audio = new Audio(url);
+    currentAudio = audio;
+    audio.onended = () => { URL.revokeObjectURL(url); if (currentAudio === audio) currentAudio = null; setStatus("就緒"); };
+    audio.onerror = () => { URL.revokeObjectURL(url); if (currentAudio === audio) currentAudio = null; setStatus("就緒"); };
+    setStatus("播放中…");
+    audio.play();
+  } catch(e) { setStatus("語音錯誤：" + e); }
+  finally    { btn.classList.remove("busy"); }
+}
 
-  // ---- boot -----------------------------------------------------------------
-  fillLangs();
-  pickBackend();
-  setInterval(pickBackend, 20000);   // re-check: jump to GPU the moment the laptop is up
+async function saveCorrection() {
+  const src = document.getElementById("srcTxt").value.trim();
+  const tgt = document.getElementById("tgtTxt").value.trim();
+  if (!src || !tgt) return;
+  const fd = new FormData();
+  fd.append("src_text",   src);
+  fd.append("model_out",  modelOut || tgt);
+  fd.append("correction", tgt);
+  fd.append("src", document.getElementById("srcLang").value);
+  fd.append("tgt", document.getElementById("tgtLang").value);
+  fd.append("native", localStorage.getItem("gluban_native") === "1" ? "1" : "0");
+  try {
+    await fetch(BACKEND + "/save_correction", { method: "POST", body: fd });
+    markSaved(tgt);
+    setStatus("✓ 已儲存");
+  } catch(e) { setStatus("儲存錯誤：" + e); }
+}
+
+// Register service worker so the app is installable to the home screen.
+if ('serviceWorker' in navigator) {
+  /* no service worker on the static client */
+}
+
+// Poll until ready
+document.getElementById("nativeChk").checked = localStorage.getItem("gluban_native") === "1";
+document.getElementById("nativeChk2").checked = localStorage.getItem("gluban_native") === "1";
+const _defSrc = localStorage.getItem("gluban_defsrc");
+const _defTgt = localStorage.getItem("gluban_deftgt");
+if (_defSrc) document.getElementById("srcLang").value = _defSrc;
+if (_defTgt) document.getElementById("tgtLang").value = _defTgt;
+applyTint(localStorage.getItem("gluban_tint") || "0.42");
+onLangChange();
+const _poll = setInterval(async () => {
+  try {
+    const j = await (await fetch(BACKEND + "/status")).json();
+    setStatus(j.ready ? "就緒" : "載入中…");
+    if (j.ready) clearInterval(_poll);
+  } catch(_) {}
+}, 2000);
 </script>
 </body>
 </html>
