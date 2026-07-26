@@ -387,6 +387,11 @@ textarea::placeholder { color: #6a8a6a; }
    always-on Hugging Face Space (CPU). The page URL never changes. */
 var BACKEND = "https://shidailun-gluban-translate.hf.space";                 /* current API base */
 var GLUBAN_DEV = null;              /* 'cuda' | 'cpu' — drives the badge + ETA */
+/* Discovery reads the gist's *raw* CDN first: it has no rate limit, so the page
+   can keep re-checking. The gist API is the fallback only — anonymous callers get
+   60 requests/hour per IP, which a re-check loop exhausts on its own, and once it
+   429/403s the page silently drops to the CPU Space. Same order as the phone app. */
+var GIST_RAW  = "https://gist.githubusercontent.com/shidailun/245a976530b60245227620d916650c1e/raw/gluban_server.txt";
 var GIST_DISC = "https://api.github.com/gists/245a976530b60245227620d916650c1e";
 /* Resilient fetch: if the chosen backend fails (e.g. the tunnel dropped), re-pick
    a reachable one and retry once. No constant polling — only acts on a real failure. */
@@ -413,14 +418,24 @@ function _discProbe(base, ms) {
       .catch(function () { resolve(null); });
   });
 }
-function _discTunnel() {
+function _discUrlOk(t) {
+  t = (t || "").trim();
+  return /^https?:\/\//.test(t) ? t : "";
+}
+/* API fallback — used only when the raw CDN fails (it 400s intermittently). */
+function _discTunnelApi() {
   return fetch(GIST_DISC + "?_=" + Date.now(), { cache: "no-store" })
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (j) {
       if (!j) return "";
-      var t = (((j.files || {})["gluban_server.txt"] || {}).content || "").trim();
-      return /^https?:\/\//.test(t) ? t : "";
+      return _discUrlOk(((j.files || {})["gluban_server.txt"] || {}).content);
     }).catch(function () { return ""; });
+}
+function _discTunnel() {
+  return fetch(GIST_RAW + "?_=" + Date.now(), { cache: "no-store" })
+    .then(function (r) { return r.ok ? r.text() : ""; })
+    .then(function (t) { return _discUrlOk(t) || _discTunnelApi(); })
+    .catch(function () { return _discTunnelApi(); });
 }
 var _discBusy = false;
 function pickBackend() {
