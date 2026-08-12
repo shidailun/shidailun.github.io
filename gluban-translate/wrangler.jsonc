@@ -1,0 +1,15 @@
+// Serves the Gluban Translate static page on shidailun.com, alongside the
+// other app subdomains. The GitHub Pages copy at
+// shidailun.github.io/gluban-translate stays up so old links keep working;
+// this is the same four files under the user's own domain.
+{
+  "name": "gluban-translate",
+  "compatibility_date": "2026-07-10",
+  "account_id": "143043889735538fc535854dee3cfeb5",
+  "assets": {
+    "directory": "."
+  },
+  "routes": [
+    { "pattern": "gluban-translate.shidailun.com", "custom_domain": true }
+  ]
+}
