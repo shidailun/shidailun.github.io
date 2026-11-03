@@ -323,7 +323,7 @@ textarea::placeholder { color: #6a8a6a; }
 <div class="history" id="history">
 </div>
 
-<div id="verBadge">網頁版 v1.2.0</div>
+<div id="verBadge">網頁版 v1.2.1</div>
 
 <div id="aboutOverlay" class="overlay" onclick="hideAbout(event)">
   <div class="aboutBox">
@@ -460,6 +460,7 @@ let modelOut = "";
 let recorder = null, recChunks = [], recording = false;
 let lastItem = null;
 let currentAudio = null;   // the one TTS clip allowed to play at a time
+const speechClips = new Map(); // retain WAVs for replay and download during this visit
 const LANG_NAME = {sdq_Latn:"賽德克語", zho_Hans:"中文", eng_Latn:"英文"};
 
 function setStatus(s) { document.getElementById("status").textContent = s; }
@@ -474,6 +475,8 @@ function addHistory(srcText, tgtText, srcCode, tgtCode) {
   if (empty) empty.remove();
   const div = document.createElement("div");
   div.className = "hItem";
+  div.dataset.srcText = srcText;
+  div.dataset.tgtText = tgtText;
   div.innerHTML =
     '<div class="hSrc">' + esc(LANG_NAME[srcCode] || srcCode) + ': ' + esc(srcText) + '</div>' +
     '<div class="hTgt">' + esc(LANG_NAME[tgtCode] || tgtCode) + ': ' + esc(tgtText) + '</div>';
@@ -486,6 +489,7 @@ function addHistory(srcText, tgtText, srcCode, tgtCode) {
 function markSaved(corrected) {
   if (!lastItem) return;
   lastItem.el.classList.add("saved");
+  lastItem.el.dataset.tgtText = corrected;
   if (!lastItem.el.querySelector(".hMark")) {
     const m = document.createElement("span");
     m.className = "hMark"; m.textContent = "✓ saved";
@@ -674,30 +678,64 @@ async function toggleMic(side) {
   } catch(e) { setStatus("麥克風錯誤：" + e); }
 }
 
+function speechKey(text, voice) { return JSON.stringify([text, voice]); }
+
+function attachSpeechClip(item, clip) {
+  if (!item) return;
+  if (!item._speechKeys) item._speechKeys = new Set();
+  if (item._speechKeys.has(clip.key)) return;
+  item._speechKeys.add(clip.key);
+  const box = document.createElement("div");
+  box.style.cssText = "margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;";
+  const label = document.createElement("span");
+  label.textContent = clip.voice + ": " + clip.text;
+  label.style.cssText = "width:100%;font-size:0.8rem;";
+  const audio = document.createElement("audio");
+  audio.controls = true; audio.preload = "metadata"; audio.src = clip.url;
+  audio.style.cssText = "max-width:100%;height:36px;";
+  audio.onplay = () => {
+    if (currentAudio && currentAudio !== audio) currentAudio.pause();
+    currentAudio = audio;
+  };
+  const download = document.createElement("a");
+  download.href = clip.url; download.download = clip.filename;
+  download.textContent = "下載 WAV"; download.style.color = "#a9d9b9";
+  box.append(label, audio, download); item.appendChild(box);
+}
+
 async function playTTS(side) {
-  const text = side === "src"
-    ? document.getElementById("srcTxt").value.trim()
-    : document.getElementById("tgtTxt").value.trim();
+  const text = document.getElementById(side === "src" ? "srcTxt" : "tgtTxt").value.trim();
   if (!text) return;
   const voice = side === "src" ? "Pawan Nawi" : "Temi Nawi";
-  const btn   = document.getElementById(side === "src" ? "playSrc" : "playTgt");
+  const btn = document.getElementById(side === "src" ? "playSrc" : "playTgt");
+  // Capture the history entry before synthesis; the user may translate another sentence meanwhile.
+  const historyItem = Array.from(document.querySelectorAll("#history .hItem"))
+    .find(item => item.dataset[side === "src" ? "srcText" : "tgtText"] === text);
+  const key = speechKey(text, voice);
   btn.classList.add("busy");
-  setStatus("合成中…");
-  const fd = new FormData();
-  fd.append("text", text); fd.append("voice", voice);
   try {
-    const r = await apiFetch("/tts", { method: "POST", body: fd });
-    if (!r.ok) throw new Error(await r.text());
-    if (currentAudio) { try { currentAudio.pause(); } catch(_) {} }  // never overlap
-    const url   = URL.createObjectURL(await r.blob());
-    const audio = new Audio(url);
+    let clip = speechClips.get(key);
+    if (!clip) {
+      setStatus("合成中…");
+      const fd = new FormData();
+      fd.append("text", text); fd.append("voice", voice);
+      const r = await apiFetch("/tts", { method: "POST", body: fd });
+      if (!r.ok) throw new Error(await r.text());
+      clip = { key, text, voice, url: URL.createObjectURL(await r.blob()),
+        filename: "gluban-" + voice.split(" ")[0] + "-" + Date.now() + ".wav" };
+      speechClips.set(key, clip);
+    }
+    attachSpeechClip(historyItem, clip);
+    if (currentAudio) { try { currentAudio.pause(); } catch (_) {} }
+    const audio = new Audio(clip.url);
     currentAudio = audio;
-    audio.onended = () => { URL.revokeObjectURL(url); if (currentAudio === audio) currentAudio = null; setStatus("就緒"); };
-    audio.onerror = () => { URL.revokeObjectURL(url); if (currentAudio === audio) currentAudio = null; setStatus("就緒"); };
+    const done = () => { if (currentAudio === audio) currentAudio = null; setStatus("就緒"); };
+    // Keep the blob URL alive: history playback and downloads still need it.
+    audio.onended = done; audio.onerror = done;
     setStatus("播放中…");
-    audio.play();
+    await audio.play();
   } catch(e) { setStatus("語音錯誤：" + e); }
-  finally    { btn.classList.remove("busy"); }
+  finally { btn.classList.remove("busy"); }
 }
 
 async function saveCorrection() {
